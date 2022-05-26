@@ -13,6 +13,7 @@
 ActiveRecord::Schema[7.0].define(version: 2022_04_18_034147) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+  enable_extension "unaccent"
 
   create_table "action_mailbox_inbound_emails", force: :cascade do |t|
     t.integer "status", default: 0, null: false
@@ -59,6 +60,53 @@ ActiveRecord::Schema[7.0].define(version: 2022_04_18_034147) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "addresses", force: :cascade do |t|
+    t.string "street"
+    t.string "number"
+    t.string "district"
+    t.string "city"
+    t.string "state"
+    t.string "cep"
+    t.string "complement"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "institution_id"
+    t.bigint "person_id"
+    t.index ["institution_id"], name: "index_addresses_on_institution_id"
+    t.index ["person_id"], name: "index_addresses_on_person_id"
+  end
+
+  create_table "contacts", force: :cascade do |t|
+    t.bigint "person_id"
+    t.bigint "institution_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["institution_id"], name: "index_contacts_on_institution_id"
+    t.index ["person_id", "institution_id"], name: "index_contacts_on_person_id_and_institution_id", unique: true
+    t.index ["person_id"], name: "index_contacts_on_person_id"
+  end
+
+  create_table "emails", force: :cascade do |t|
+    t.string "address"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "person_id"
+    t.bigint "institution_id"
+    t.index ["institution_id"], name: "index_emails_on_institution_id"
+    t.index ["person_id"], name: "index_emails_on_person_id"
+  end
+
+  create_table "institutions", force: :cascade do |t|
+    t.string "fantasy_name"
+    t.string "social_name"
+    t.string "cnpj"
+    t.string "website"
+    t.string "phone_number"
+    t.text "observations"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "integrations_stripe_installations", force: :cascade do |t|
@@ -171,6 +219,18 @@ ActiveRecord::Schema[7.0].define(version: 2022_04_18_034147) do
     t.index ["user_id"], name: "index_oauth_stripe_accounts_on_user_id"
   end
 
+  create_table "people", force: :cascade do |t|
+    t.string "full_name"
+    t.string "cpf"
+    t.string "phone_number"
+    t.text "observations"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.boolean "role_institution_representative"
+    t.boolean "role_technical_manager"
+    t.boolean "role_financial_officer"
+  end
+
   create_table "scaffolding_absolutely_abstract_creative_concepts", force: :cascade do |t|
     t.bigint "team_id", null: false
     t.string "name"
@@ -221,6 +281,15 @@ ActiveRecord::Schema[7.0].define(version: 2022_04_18_034147) do
     t.datetime "updated_at", precision: nil, null: false
     t.index ["membership_id"], name: "index_tangible_things_assignments_on_membership_id"
     t.index ["tangible_thing_id"], name: "index_tangible_things_assignments_on_tangible_thing_id"
+  end
+
+  create_table "services", force: :cascade do |t|
+    t.string "name"
+    t.float "value"
+    t.text "observations"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.text "description"
   end
 
   create_table "teams", id: :serial, force: :cascade do |t|
@@ -331,6 +400,8 @@ ActiveRecord::Schema[7.0].define(version: 2022_04_18_034147) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "addresses", "institutions"
+  add_foreign_key "addresses", "people"
   add_foreign_key "integrations_stripe_installations", "oauth_stripe_accounts"
   add_foreign_key "integrations_stripe_installations", "teams"
   add_foreign_key "invitations", "teams"
